@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Windows;
 using Prism.Services.Dialogs;
 
 namespace PrismExtension
@@ -59,6 +61,25 @@ namespace PrismExtension
         public static void ShowDialog<TParameter>(this IDialogService dialogService, string name, TParameter parameter,
             Action<IDialogResult> callback) =>
             dialogService.ShowDialog(name, new DialogParameters {{typeof(TParameter).Name, parameter}}, callback);
+
+        /// <summary>
+        ///     Show a modal dialog and add <see cref="TParameter"/> in the <see cref="ICollection{T}"/> if dialog result is Ok.
+        /// </summary>
+        /// <param name="dialogService">Interface to show modal and non-modal dialogs.</param>
+        /// <param name="name">The name of the dialog to show.</param>
+        /// <param name="parameter">The parameters to pass to the dialog. The parameter key is <see cref="TParameter"/> name.</param>
+        /// <param name="source">The collection where the parameter <see cref="TParameter"/> will be added </param>
+        /// <typeparam name="TParameter">Value to add</typeparam>
+        public static void ShowDialog<TParameter>(this IDialogService dialogService, string name, TParameter parameter, ICollection<TParameter> source)
+        {
+            dialogService.ShowDialog(name, new DialogParameters {{typeof(TParameter).Name, parameter}}, result =>
+            {
+                if (result.TryGetDialogParameter<TParameter>(out var value))
+                {
+                    Application.Current.Dispatcher.Invoke(() => source.Add(value));
+                }
+            });
+        }
 
         /// <summary>
         ///     Create new Ok dialog result with key as <see cref="TValue"/> name and <see cref="TValue"/> as value.
